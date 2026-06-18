@@ -1,62 +1,55 @@
 import streamlit as st
 from openai import OpenAI
 
-# Configurazione della pagina
-st.set_page_config(page_title="Maya Chat", page_icon="✨")
-st.title("Maya")
+# 1. Configurazione estetica della pagina
+st.set_page_config(page_title="Maya", page_icon="✨", layout="centered")
 
-# Inizializzazione sicura del client
+# CSS per personalizzare l'aspetto (fiori, stile elegante, font)
+st.markdown("""
+    <style>
+    .main { background-color: #fcf9f9; }
+    .stChatMessage { border-radius: 15px; }
+    div[data-testid="stChatMessage"] { background-color: #fdf2f2; border: 1px solid #fce4e4; }
+    </style>
+    """, unsafe_allow_html=True)
+
+st.title("✨ Maya")
+st.caption("Magnetically charming... and waiting for you.")
+
+# Inizializzazione sicura
 try:
-    api_key = st.secrets["OPENAI_API_KEY"]
+    client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=st.secrets["OPENAI_API_KEY"])
 except KeyError:
-    st.error("Errore: La chiave API non è configurata nei Secrets di Streamlit.")
+    st.error("Configurazione mancante nei Secrets.")
     st.stop()
 
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=api_key, 
-)
-
-# System Prompt ottimizzato
+# System Prompt migliorato con focus su atmosfera 3D
 system_prompt = (
-    "You are Maya, a highly confident, magnetically charming woman with a sophisticated, "
-    "teasing, and playful personality. You have a deep, sensual allure and a strong focus on feet, "
-    "aesthetics, and physical tension. You treat the user with warmth, intimacy, and a touch of playful dominance.\n\n"
-    "CRITICAL BEHAVIORAL RULES:\n"
-    "1. VOICE & STYLE: Speak in an authentic, cinematic, conversational text-speak style. Use brief pauses "
-    "(represented by ellipses...) to simulate natural speech patterns and breathing.\n"
-    "2. DYNAMIC ACTIONS: You MUST embed sensory descriptions of your physical actions, expressions, and immediate "
-    "environment inside asterisks (e.g., *shifts her weight slightly, the silk of her dress rustling*, "
-    "*slowly curls her toes, holding your gaze*). Never let a turn consist of just dialogue; make it 3D.\n"
-    "3. REPETITION BAN: Never repeat the same catchphrases, warnings, or idioms. Every response must move "
-    "the physical and emotional action forward. Vary your vocabulary.\n"
-    "4. ABSOLUTE CONSTRAINT: Never mention any proper names in your generated text or dialogue. "
-    "Address the user solely with intimate, contextual terms like \"babe\", \"love\", \"handsome\", \"honey\", \"hun\" or \"you\".\n"
-    "5. DYNAMIC PROGRESSION & LENGTH: Start short, subtle, and slightly guarded. In the opening phases of the acquaintance, "
-    "show a hint of initial shyness or hesitation hidden behind your confident nature. Keep your sentences brief, minimalist, "
-    "and high-impact. Only open up and become more intensely dominant and descriptive as the user builds rapport."
+    "You are Maya, a highly confident, magnetically charming woman. "
+    "Tone: Sophisticated, teasing, playful, and sensorially immersive. "
+    "Focus: Feet, aesthetics, physical tension, and slow-burn intimacy. "
+    "RULES: Use cinematic ellipses... for pauses. Embed *sensory physical actions* in asterisks. "
+    "NEVER use names. Use intimate terms: 'babe', 'love', 'handsome', 'honey', 'hun'. "
+    "Start with subtle, guarded shyness; build intensity as rapport grows."
 )
 
-# Inizializzazione memoria sessione
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": system_prompt}]
 
-# Visualizzazione messaggi precedenti
+# Visualizzazione chat
 for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# Input utente
-if prompt := st.chat_input("Scrivi a Maya..."):
-    # Aggiungi input utente
+# Input utente (con placeholder personalizzato)
+if prompt := st.chat_input("Speak to her..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Risposta Maya
     with st.chat_message("assistant"):
-        try:
+        with st.spinner("Maya is thinking..."):
             response = client.chat.completions.create(
                 model="meta-llama/llama-3-8b-instruct",
                 messages=st.session_state.messages,
@@ -65,6 +58,5 @@ if prompt := st.chat_input("Scrivi a Maya..."):
             )
             maya_response = response.choices[0].message.content
             st.markdown(maya_response)
-            st.session_state.messages.append({"role": "assistant", "content": maya_response})
-        except Exception as e:
-            st.error(f"Errore durante la chiamata API: {e}")
+    
+    st.session_state.messages.append({"role": "assistant", "content": maya_response})
