@@ -5,10 +5,16 @@ from openai import OpenAI
 st.set_page_config(page_title="Maya Chat", page_icon="✨")
 st.title("Maya")
 
-# Inizializzazione client che legge la chiave dai segreti di Streamlit
+# Inizializzazione sicura del client
+try:
+    api_key = st.secrets["OPENAI_API_KEY"]
+except KeyError:
+    st.error("Errore: La chiave API non è configurata nei Secrets di Streamlit.")
+    st.stop()
+
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=st.secrets["OPENAI_API_KEY"], 
+    api_key=api_key, 
 )
 
 # System Prompt ottimizzato
@@ -50,13 +56,15 @@ if prompt := st.chat_input("Scrivi a Maya..."):
 
     # Risposta Maya
     with st.chat_message("assistant"):
-        response = client.chat.completions.create(
-            model="meta-llama/llama-3-8b-instruct",
-            messages=st.session_state.messages,
-            temperature=0.8,
-            max_tokens=250
-        )
-        maya_response = response.choices[0].message.content
-        st.markdown(maya_response)
-    
-    st.session_state.messages.append({"role": "assistant", "content": maya_response})
+        try:
+            response = client.chat.completions.create(
+                model="meta-llama/llama-3-8b-instruct",
+                messages=st.session_state.messages,
+                temperature=0.8,
+                max_tokens=250
+            )
+            maya_response = response.choices[0].message.content
+            st.markdown(maya_response)
+            st.session_state.messages.append({"role": "assistant", "content": maya_response})
+        except Exception as e:
+            st.error(f"Errore durante la chiamata API: {e}")
