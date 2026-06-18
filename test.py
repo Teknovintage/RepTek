@@ -5,10 +5,10 @@ from openai import OpenAI
 st.set_page_config(page_title="Maya Chat", page_icon="✨")
 st.title("Maya")
 
-# Inizializzazione client (Assicurati di inserire la tua chiave qui o meglio nelle impostazioni di Streamlit Cloud)
+# Inizializzazione client che legge la chiave dai segreti di Streamlit
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="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", 
+    api_key=st.secrets["OPENAI_API_KEY"], 
 )
 
 # System Prompt ottimizzato
@@ -60,4 +60,3 @@ if prompt := st.chat_input("Scrivi a Maya..."):
         st.markdown(maya_response)
     
     st.session_state.messages.append({"role": "assistant", "content": maya_response})
-
